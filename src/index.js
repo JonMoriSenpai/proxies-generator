@@ -21,7 +21,7 @@ const Proxy = {
 class ProxyGen {
   /**
    * @method fetch() -> Fetch Proxy from Valid Website and Returns as Array or undefined on Errors
-   * @param {Number|undefined} Limit Max Number of Proxies should be returned
+   * @param {String|Number|undefined} Limit Max Number of Proxies should be returned | "all" to get all proxies at once or 1,2,3...
    * @param {String|undefined} ProxyGenWebsite Website to scrap proxies , remain undefined to fetch from default website
    * @param {Boolean|undefined} ValidCheck Package should check its validity as proxy
    * @returns {Promise<Proxy[]|undefined|Error>} array of Proxy or undefined on errors
@@ -31,6 +31,7 @@ class ProxyGen {
     ProxyGenWebsite = 'https://sslproxies.org/',
     ValidCheck = true,
   ) {
+    if (Limit <= 0) return void null;
     const RawProxies = {
       ip_addresses: [],
       port_numbers: [],
@@ -68,7 +69,11 @@ class ProxyGen {
       $('td:nth-child(8)').each(function (index, value) {
         RawProxies.last_updates[index] = $(this).text();
       });
-      return await ProxyGen.#proxyModel(Limit, RawProxies, ValidCheck);
+      return await ProxyGen.#proxyModel(
+        Limit.toLowerCase().trim() === 'all' ? RawProxies.ip_addresses.length - 1 : Limit,
+        RawProxies,
+        ValidCheck,
+      );
     }
     if (ProxyGenWebsite !== 'https://sslproxies.org/') {
       return await ProxyGen.fetch(Limit, 'https://sslproxies.org/', ValidCheck);
@@ -92,10 +97,11 @@ class ProxyGen {
     ValidCheck = true,
   ) {
     if (!CountryAlias) return void null;
-    const Proxies = await ProxyGen.fetch(Limit, ProxyGenWebsite, ValidCheck);
+    const Proxies = await ProxyGen.fetch('all', ProxyGenWebsite, ValidCheck);
     const CountryBYProxies = [];
     for (let count = 0, len = Proxies.length; count < len; ++count) {
-      if (
+      if (Limit <= CountryBYProxies.length) break;
+      else if (
         (typeof CountryAlias === 'object'
           && CountryAlias[0]
           && ((Proxies[count].code
@@ -124,7 +130,7 @@ class ProxyGen {
 
   static async random(Limit = 1, ValidCheck = true) {
     const Proxiesdata = await ProxyGen.fetch(
-      Limit,
+      'all',
       'https://sslproxies.org/',
       ValidCheck,
     );
@@ -144,7 +150,7 @@ class ProxyGen {
    */
 
   static async randomOne(ValidCheck = true) {
-    return await ProxyGen.random(1, ValidCheck)[0];
+    return (await ProxyGen.random(1, ValidCheck))[0];
   }
 
   /**
@@ -157,7 +163,7 @@ class ProxyGen {
     ProxyGenWebsite = 'https://sslproxies.org/',
     ValidCheck = true,
   ) {
-    return await ProxyGen.fetch(1, ProxyGenWebsite, ValidCheck)[0];
+    return (await ProxyGen.fetch(1, ProxyGenWebsite, ValidCheck))[0];
   }
 
   /**

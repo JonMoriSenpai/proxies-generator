@@ -1,7 +1,7 @@
 import { Proxy } from './instances'
 
 export function fetch (
-  Limit?: Number | undefined,
+  Limit?: String | Number | undefined | 'all' | 1,
   ProxyGenWebsite?: String | undefined,
   ValidCheck?: Boolean | undefined
 ): Promise<Proxy[] | undefined | Error>
