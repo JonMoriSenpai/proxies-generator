@@ -49,6 +49,7 @@ const Proxies = fetch() // Proxy Array with validity checks
  */
 
 const Proxy = fetchOne() //Fetch One Proxy
+const Proxy = fetchBycountry('Brazil') //Fetch Proxy from brazil if present in Cache
 const Proxies = random() //Fetch Array of Random Proxy
 const Proxy = randomOne() //Fetch One Random Proxy
 ```

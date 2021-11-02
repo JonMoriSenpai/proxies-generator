@@ -77,6 +77,45 @@ class ProxyGen {
   }
 
   /**
+   * @method fetchBycountry() -> Fetch proxy based on Country Codes or Country Name
+   * @param {Array|String|undefined} CountryAlias Country Name or Code | Or Array of names and codes for checking multi countries
+   * @param {Number|undefined} Limit max proxies to return
+   * @param {String|undefined} ProxyGenWebsite Fetch Proxies Data from Valid Website
+   * @param {Boolean|undefined} ValidCheck Package should check its validity as proxy
+   * @returns {Promise<Proxy[]|undefined|Error>} array of Proxy or undefined on errors
+   */
+
+  static async fetchBycountry(
+    CountryAlias = undefined,
+    Limit = 1,
+    ProxyGenWebsite = 'https://sslproxies.org/',
+    ValidCheck = true,
+  ) {
+    if (!CountryAlias) return void null;
+    const Proxies = await ProxyGen.fetch(Limit, ProxyGenWebsite, ValidCheck);
+    const CountryBYProxies = [];
+    for (let count = 0, len = Proxies.length; count < len; ++count) {
+      if (
+        (typeof CountryAlias === 'object'
+          && CountryAlias[0]
+          && ((Proxies[count].code
+            && CountryAlias.includes(Proxies[count].code.trim()))
+            || (Proxies[count].country
+              && CountryAlias.includes(Proxies[count].country.trim()))))
+        || (Proxies[count].code
+          && CountryAlias.tolowerCase().trim()
+            === Proxies[count].code.toLowerCase().trim())
+        || (Proxies[count].country
+          && CountryAlias.tolowerCase().trim()
+            === Proxies[count].country.toLowerCase().trim())
+      ) {
+        CountryBYProxies.push(Proxies[count]);
+      }
+    }
+    return CountryBYProxies;
+  }
+
+  /**
    * @method random() -> Fetch Random Proxy from Default Website and Returns as Array or undefined on Errors
    * @param {Number|undefined} Limit Max Number of Proxies should be returned
    * @param {Boolean|undefined} ValidCheck Package should check its validity as proxy
@@ -156,6 +195,9 @@ class ProxyGen {
           type: RawProxiesData.proxy_types[count],
           updated: RawProxiesData.last_updates[count],
           https: !!RawProxiesData.https_booleans[count] ?? false,
+          httpsurl: RawProxiesData.https_booleans[count]
+            ? `https://${RawProxiesData.ip_addresses[count]}:${RawProxiesData.port_numbers[count]}`
+            : undefined,
           url: RawProxiesData.https_booleans[count]
             ? `https://${RawProxiesData.ip_addresses[count]}:${RawProxiesData.port_numbers[count]}`
             : `${RawProxiesData.ip_addresses[count]}:${RawProxiesData.port_numbers[count]}`,
@@ -180,4 +222,12 @@ class ProxyGen {
   }
 }
 
-module.exports = ProxyGen;
+module.exports = {
+  default: ProxyGen,
+  fetch: ProxyGen.fetch,
+  fetchOne: ProxyGen.fetchOne,
+  fetchBycountry: ProxyGen.fetchBycountry,
+  random: ProxyGen.random,
+  randomOne: ProxyGen.randomOne,
+  validity: ProxyGen.validity,
+};
