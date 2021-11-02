@@ -198,9 +198,7 @@ class ProxyGen {
           httpsurl: RawProxiesData.https_booleans[count]
             ? `https://${RawProxiesData.ip_addresses[count]}:${RawProxiesData.port_numbers[count]}`
             : undefined,
-          url: RawProxiesData.https_booleans[count]
-            ? `https://${RawProxiesData.ip_addresses[count]}:${RawProxiesData.port_numbers[count]}`
-            : `${RawProxiesData.ip_addresses[count]}:${RawProxiesData.port_numbers[count]}`,
+          url: `${RawProxiesData.ip_addresses[count]}:${RawProxiesData.port_numbers[count]}`,
         });
       } else if (!ValidCheckif) {
         UserProxyArray.push({
