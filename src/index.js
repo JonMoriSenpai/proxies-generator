@@ -82,7 +82,7 @@ class ProxyGen {
         RawProxies.last_updates[index] = $(this).text();
       });
       return await ProxyGen.#proxyModel(
-        Limit.toLowerCase().trim() === 'all'
+        typeof Limit === 'string' && Limit.toLowerCase().trim() === 'all'
           ? RawProxies.ip_addresses.length - 1
           : Limit,
         RawProxies,
@@ -205,6 +205,15 @@ class ProxyGen {
     return CountryBYProxies;
   }
 
+  /**
+   * @private #proxyModel -> Creating a Model for user Proxy Driven
+   * @param {Number} Limit max Proxies to be returned
+   * @param {Object} RawProxiesData Proxies Data from Axios get method
+   * @param {Boolean|undefined} ValidCheckif To check validity for normal use
+   * @param {DefaultFilter<Object>} Filter Filter Proxies during Model creation
+   * @returns {Proxy[]|undefined} Proxies for users requested
+   */
+
   static async #proxyModel(Limit = 1, RawProxiesData, ValidCheckif, Filter) {
     RawProxiesData = Filter.country
       ? ProxyGen.#CountryFilter(Limit, RawProxiesData, Filter.country)
@@ -218,7 +227,8 @@ class ProxyGen {
     ) {
       if (Limit <= UserProxyArray.length) break;
       else if (Filter && Filter.random) {
-        ProxyIndex = Math.floor(Math.random() * (RawProxiesData.ip_addresses.length - 1)) + 1;
+        ProxyIndex = Math.floor(Math.random() * (RawProxiesData.ip_addresses.length - 1))
+          + 1;
         if (
           ProxyGen.#RandomProxyCache
             !== RawProxiesData.ip_addresses[ProxyIndex - 1]
