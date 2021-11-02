@@ -131,7 +131,7 @@ class ProxyGen {
     const ProxyIndex = Math.floor(Math.random() * (Proxiesdata.length - 1)) + 1;
     const RandomProxyArray = [];
     for (let count = 0, len = Proxiesdata.length; count < len; ++count) {
-      if (Limit <= count) break;
+      if (Limit <= RandomProxyArray.length) break;
       RandomProxyArray.push(Proxiesdata[ProxyIndex - 1]);
     }
     return RandomProxyArray;
@@ -179,7 +179,7 @@ class ProxyGen {
       count < len;
       ++count
     ) {
-      if (Limit <= count) break;
+      if (Limit <= UserProxyArray.length) break;
       else if (
         ValidCheckif
         && (await ProxyGen.validity(
