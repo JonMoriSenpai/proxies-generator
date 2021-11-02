@@ -9,3 +9,8 @@ export type Proxy = {
   httpsurl: String
   url: String
 }
+
+export type FilterOptions = {
+  country: Boolean | undefined
+  random: Boolean | undefined
+}

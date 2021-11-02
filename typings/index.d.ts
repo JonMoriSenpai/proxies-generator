@@ -1,9 +1,10 @@
-import { Proxy } from './instances'
+import { Proxy, FilterOptions } from './instances'
 
 export function fetch (
   Limit?: String | Number | undefined | 'all' | 1,
   ProxyGenWebsite?: String | undefined,
-  ValidCheck?: Boolean | undefined
+  ValidCheck?: Boolean | undefined,
+  Filter?: FilterOptions | undefined
 ): Promise<Proxy[] | undefined | Error>
 export function random (
   Limit?: Number | undefined,

@@ -18,18 +18,30 @@ const Proxy = {
   url: '',
 };
 
+/**
+ * Default Filter Options for fetch method
+ */
+const DefaultFilter = {
+  country: false,
+  random: true,
+};
+
 class ProxyGen {
+  static #RandomProxyCache = undefined;
+
   /**
    * @method fetch() -> Fetch Proxy from Valid Website and Returns as Array or undefined on Errors
    * @param {String|Number|undefined} Limit Max Number of Proxies should be returned | "all" to get all proxies at once or 1,2,3...
    * @param {String|undefined} ProxyGenWebsite Website to scrap proxies , remain undefined to fetch from default website
    * @param {Boolean|undefined} ValidCheck Package should check its validity as proxy
+   * @param {DefaultFilter<Object>|undefined} Filter Filters for fetch method like country or https
    * @returns {Promise<Proxy[]|undefined|Error>} array of Proxy or undefined on errors
    */
   static async fetch(
-    Limit = 1,
+    Limit = 10,
     ProxyGenWebsite = 'https://sslproxies.org/',
     ValidCheck = true,
+    Filter = DefaultFilter,
   ) {
     if (Limit <= 0) return void null;
     const RawProxies = {
@@ -70,9 +82,12 @@ class ProxyGen {
         RawProxies.last_updates[index] = $(this).text();
       });
       return await ProxyGen.#proxyModel(
-        Limit.toLowerCase().trim() === 'all' ? RawProxies.ip_addresses.length - 1 : Limit,
+        Limit.toLowerCase().trim() === 'all'
+          ? RawProxies.ip_addresses.length - 1
+          : Limit,
         RawProxies,
         ValidCheck,
+        Filter,
       );
     }
     if (ProxyGenWebsite !== 'https://sslproxies.org/') {
@@ -97,28 +112,9 @@ class ProxyGen {
     ValidCheck = true,
   ) {
     if (!CountryAlias) return void null;
-    const Proxies = await ProxyGen.fetch('all', ProxyGenWebsite, ValidCheck);
-    const CountryBYProxies = [];
-    for (let count = 0, len = Proxies.length; count < len; ++count) {
-      if (Limit <= CountryBYProxies.length) break;
-      else if (
-        (typeof CountryAlias === 'object'
-          && CountryAlias[0]
-          && ((Proxies[count].code
-            && CountryAlias.includes(Proxies[count].code.trim()))
-            || (Proxies[count].country
-              && CountryAlias.includes(Proxies[count].country.trim()))))
-        || (Proxies[count].code
-          && CountryAlias.tolowerCase().trim()
-            === Proxies[count].code.toLowerCase().trim())
-        || (Proxies[count].country
-          && CountryAlias.tolowerCase().trim()
-            === Proxies[count].country.toLowerCase().trim())
-      ) {
-        CountryBYProxies.push(Proxies[count]);
-      }
-    }
-    return CountryBYProxies;
+    return await ProxyGen.fetch(Limit, ProxyGenWebsite, ValidCheck, {
+      country: true,
+    });
   }
 
   /**
@@ -128,19 +124,10 @@ class ProxyGen {
    * @returns {Promise<Proxy[]|undefined|Error>} array of Proxy or undefined on errors
    */
 
-  static async random(Limit = 1, ValidCheck = true) {
-    const Proxiesdata = await ProxyGen.fetch(
-      'all',
-      'https://sslproxies.org/',
-      ValidCheck,
-    );
-    const ProxyIndex = Math.floor(Math.random() * (Proxiesdata.length - 1)) + 1;
-    const RandomProxyArray = [];
-    for (let count = 0, len = Proxiesdata.length; count < len; ++count) {
-      if (Limit <= RandomProxyArray.length) break;
-      RandomProxyArray.push(Proxiesdata[ProxyIndex - 1]);
-    }
-    return RandomProxyArray;
+  static async random(Limit = 10, ValidCheck = true) {
+    return await ProxyGen.fetch(Limit, 'https://sslproxies.org/', ValidCheck, {
+      random: true,
+    });
   }
 
   /**
@@ -174,19 +161,96 @@ class ProxyGen {
    */
 
   static async validity(IP, Port) {
-    const result = await ProxyCheck(`${IP}:${Port}`).catch((error) => void null);
-    return result;
+    return await ProxyCheck(`${IP}:${Port}`).catch((error) => void null);
   }
 
-  static async #proxyModel(Limit, RawProxiesData, ValidCheckif) {
+  /**
+   * @private "CountryFilter() -> Filter of Data m"
+   * @param {Object[]} RawProxies Raw Proxies from axios
+   * @param {String|Object[]} CountryAlias Country name or code alais in String or Array
+   * @returns {Object[]|undefined} Country Filtered Data
+   */
+
+  static #CountryFilter(Limit = 1, RawProxies, CountryAlias) {
+    const CountryBYProxies = [];
+    for (let count = 0, len = RawProxies.length; count < len; ++count) {
+      if (Limit <= CountryBYProxies.length) break;
+      else if (
+        (typeof CountryAlias === 'object'
+          && CountryAlias[0]
+          && ((RawProxies.country_codes[count]
+            && CountryAlias.includes(RawProxies.country_codes[count].trim()))
+            || (RawProxies.country_names[count]
+              && CountryAlias.includes(
+                RawProxies.country_names[count].trim(),
+              ))))
+        || (RawProxies.country_codes[count]
+          && CountryAlias.tolowerCase().trim()
+            === RawProxies.country_codes[count].toLowerCase().trim())
+        || (RawProxies.country_names[count]
+          && CountryAlias.tolowerCase().trim()
+            === RawProxies.country_names[count].toLowerCase().trim())
+      ) {
+        CountryBYProxies.ip_addresses.push(RawProxies.ip_addresses[count]);
+        CountryBYProxies.port_numbers.push(RawProxies.port_numbers[count]);
+        CountryBYProxies.country_codes.push(RawProxies.country_codes[count]);
+        CountryBYProxies.country_names.push(RawProxies.country_names[count]);
+        CountryBYProxies.proxy_types.push(RawProxies.proxy_types[count]);
+        CountryBYProxies.last_updates.push(RawProxies.last_updates[count]);
+        CountryBYProxies.https_booleans.push(
+          !!RawProxies.https_booleans[count] ?? false,
+        );
+      }
+    }
+    return CountryBYProxies;
+  }
+
+  static async #proxyModel(Limit = 1, RawProxiesData, ValidCheckif, Filter) {
+    RawProxiesData = Filter.country
+      ? ProxyGen.#CountryFilter(Limit, RawProxiesData, Filter.country)
+      : RawProxiesData;
     const UserProxyArray = [];
+    let ProxyIndex = null;
     for (
       let count = 0, len = RawProxiesData.ip_addresses.length;
       count < len;
       ++count
     ) {
       if (Limit <= UserProxyArray.length) break;
-      else if (
+      else if (Filter && Filter.random) {
+        ProxyIndex = Math.floor(Math.random() * (RawProxiesData.ip_addresses.length - 1)) + 1;
+        if (
+          ProxyGen.#RandomProxyCache
+            !== RawProxiesData.ip_addresses[ProxyIndex - 1]
+          && ValidCheckif
+          && (await ProxyGen.validity(
+            RawProxiesData.ip_addresses[ProxyIndex - 1],
+            RawProxiesData.port_numbers[ProxyIndex - 1],
+          )) === true
+        ) {
+          UserProxyArray.push({
+            ip: RawProxiesData.ip_addresses[ProxyIndex - 1],
+            port: RawProxiesData.port_numbers[ProxyIndex - 1],
+            code: RawProxiesData.country_codes[ProxyIndex - 1],
+            country: RawProxiesData.country_names[ProxyIndex - 1],
+            type: RawProxiesData.proxy_types[ProxyIndex - 1],
+            updated: RawProxiesData.last_updates[ProxyIndex - 1],
+            https: !!RawProxiesData.https_booleans[ProxyIndex - 1] ?? false,
+            httpsurl: RawProxiesData.https_booleans[ProxyIndex - 1]
+              ? `https://${RawProxiesData.ip_addresses[ProxyIndex - 1]}:${
+                RawProxiesData.port_numbers[ProxyIndex - 1]
+              }`
+              : undefined,
+            url: `${RawProxiesData.ip_addresses[ProxyIndex - 1]}:${
+              RawProxiesData.port_numbers[ProxyIndex - 1]
+            }`,
+          });
+          if (
+            ProxyGen.#RandomProxyCache
+            !== RawProxiesData.ip_addresses[ProxyIndex - 1]
+          ) ProxyGen.#RandomProxyCache = RawProxiesData.ip_addresses[ProxyIndex - 1];
+        }
+      } else if (
         ValidCheckif
         && (await ProxyGen.validity(
           RawProxiesData.ip_addresses[count],
@@ -206,7 +270,14 @@ class ProxyGen {
             : undefined,
           url: `${RawProxiesData.ip_addresses[count]}:${RawProxiesData.port_numbers[count]}`,
         });
-      } else if (!ValidCheckif) {
+      } else if (
+        !(
+          Filter
+          && Filter.random
+          && ProxyGen.#RandomProxyCache === RawProxiesData.ip_addresses[count]
+        )
+        && !ValidCheckif
+      ) {
         UserProxyArray.push({
           ip: RawProxiesData.ip_addresses[count],
           port: RawProxiesData.port_numbers[count],
