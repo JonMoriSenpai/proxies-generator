@@ -8,7 +8,7 @@
 
 ## About
 
-Proxies Generator is a Generator/Scrapper and Helps Players to fetch Proxies from Custom Scrappers , as Per reduces extra work and credentials.
+Free Proxies Generator is a Generator/Scrapper and Helps Players to fetch Proxies from Custom Scrappers , as Per reduces extra work and credentials.
 
 - Object-oriented , means Value returned in a structure format
 - Customisable Validator
