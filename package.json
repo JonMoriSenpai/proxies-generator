@@ -1,6 +1,6 @@
 {
   "name": "proxies-generator",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Free Proxies Generator is a Generator/Scrapper and Helps Players to fetch Proxies from Custom Scrappers , as Per reduces extra work and credentials",
   "main": "./src/index.js",
   "module": "./src/index.mjs",
@@ -24,14 +24,14 @@
     "push": "git add . && npm run commit && git push"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.16.0",
-    "@babel/preset-env": "^7.16.0",
+    "@babel/eslint-parser": "^7.16.5",
+    "@babel/preset-env": "^7.16.5",
     "cz-conventional-changelog": "^3.3.0",
-    "eslint": "^8.1.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.25.2",
+    "eslint": "^8.5.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.3",
     "nyc": "^15.1.0",
-    "semantic-release": "^18.0.0"
+    "semantic-release": "^18.0.1"
   },
   "config": {
     "commitizen": {
