@@ -25,6 +25,7 @@
     "no-nested-ternary": "off",
     "no-unused-expressions": "off",
     "func-names": "off",
-    "no-await-in-loop": "off"
+    "no-await-in-loop": "off",
+    "default-param-last": "off"
   }
 }
